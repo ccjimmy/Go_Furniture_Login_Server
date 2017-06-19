@@ -211,7 +211,7 @@ func (this *Handler) heartPackage(oldSession *ace.Session, newSession *ace.Sessi
 	oldSession.Write(&ace.DefaultSocketModel{protocol.LOGIN, -1, HEART_PACKAGE_SREQ, []byte("are you there?")})
 	oldSession.IsColse = true
 	//3秒后判断心跳是否活跃
-	timer := time.NewTicker(time.Duration(3000) * time.Millisecond)
+	timer := time.NewTicker(time.Duration(2000) * time.Millisecond)
 	for {
 		select {
 		case <-timer.C:
