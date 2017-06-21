@@ -3,7 +3,7 @@ package data
 import (
 	"ace"
 	"database/sql"
-	//	"fmt"
+	"fmt"
 	"tools"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -44,7 +44,7 @@ func (this *Sync) SessionClose(session *ace.Session) {
 	tools.CheckErr(err)
 	_, err = stmtUp.Exec(0, tempacc)
 	tools.CheckErr(err)
-	//fmt.Println(this.SessionAccount[session], "----------->>>>>离开了", "持久化数据")
+	fmt.Println(this.SessionAccount[session], "----------->>>>>离开了", "持久化数据")
 	//清除session与账号相关联的 map数据
 	delete(this.AccountSession, tempacc)
 	delete(this.SessionAccount, session)

@@ -22,28 +22,47 @@ type AccountDTO struct {
 
 //协议
 const (
-	REGIST_SREQ        = 1  //command=1代表这是注册结果
-	LOGIN_SREQ         = 3  //3代表登陆成功
-	HEART_PACKAGE_CREQ = 4  //心跳检查
-	HEART_PACKAGE_SREQ = 5  //心跳检查
-	RETRY_LOGIN_SREQ   = 6  //建议客户端尝试重新登陆
-	EXIT_CREQ          = 10 //退出登录
+	REGIST_CREQ = 0
+	REGIST_SREQ = 1 //command=1代表这是注册结果
+	LOGIN_CREQ  = 2
+	LOGIN_SREQ  = 3 //3代表登陆成功
+
+	RELOGIN_CREQ = 4 //重新登陆
+	RELOGIN_SRES = 5 //重新登陆
+
+	EXIT_CREQ = 10 //退出登录
 )
 
 //登陆结果变量
-//如果登陆成功直接返回用户类别
 const (
 	USER_NO      = "10" //用户名不存在
 	USER_RELOGIN = "11" //重复登录
 	USER_PSDERR  = "12" //密码错误
-	USER_WAIT    = "13" //需要进行是否重复登陆的判断，请等待
+	//USER_WAIT    = "13" //需要进行是否重复登陆的判断，请等待
+	//LOGIN_OK = "14" //登陆成功 返回用户昵称
 )
 
 type Handler struct {
-	OldNewSession map[*ace.Session]*ace.Session //判断重复登陆时，保存已存在的和新来的Session
 }
 
-var LoginHander = &Handler{OldNewSession: make(map[*ace.Session]*ace.Session)}
+var LoginHander = &Handler{}
+
+func (this *Handler) Process(session *ace.Session, message ace.DefaultSocketModel) {
+	switch message.Command {
+	case REGIST_CREQ: //注册
+		this.RegistProcess(session, message)
+		break
+	case LOGIN_CREQ: //登陆
+		this.LoginProcess(session, message)
+		break
+	case RELOGIN_CREQ: //重新登录
+		this.ReLoginProcess(session, message)
+		break
+	case EXIT_CREQ: //推出登陆
+		this.ExitProcess(session)
+		break
+	}
+}
 
 //注册账号
 func (this *Handler) RegistProcess(session *ace.Session, message ace.DefaultSocketModel) {
@@ -79,7 +98,7 @@ func (this *Handler) LoginProcess(session *ace.Session, message ace.DefaultSocke
 	defer func() {
 		if r := recover(); r != nil {
 			//有错误的话将返回"err"
-			session.Write(&ace.DefaultSocketModel{protocol.LOGIN, -1, REGIST_SREQ, []byte("err")})
+			session.Write(&ace.DefaultSocketModel{protocol.LOGIN, -1, LOGIN_SREQ, []byte("err")})
 		}
 	}()
 	//解开json
@@ -93,6 +112,30 @@ func (this *Handler) LoginProcess(session *ace.Session, message ace.DefaultSocke
 	loginResult := this.login(session, &loginData.Username, &loginData.Password)
 	//登录结果 响应
 	session.Write(&ace.DefaultSocketModel{protocol.LOGIN, 88, LOGIN_SREQ, []byte(loginResult)})
+}
+
+//断线重新登陆
+func (this *Handler) ReLoginProcess(session *ace.Session, message ace.DefaultSocketModel) {
+	//错误处理
+	defer func() {
+		if r := recover(); r != nil {
+			//有错误的话将返回"err"
+			session.Write(&ace.DefaultSocketModel{protocol.LOGIN, -1, RELOGIN_SRES, []byte("err")})
+			fmt.Print("社么结果err")
+		}
+	}()
+	//解开json
+	loginData := &AccountDTO{}
+	err := json.Unmarshal(message.Message, &loginData)
+	if err != nil {
+		fmt.Println(err)
+	}
+	//fmt.Println("申请登录", loginData.Username, loginData.Password)
+	//登陆具体逻辑
+	loginResult := this.login(session, &loginData.Username, &loginData.Password)
+	//登录结果 响应
+	session.Write(&ace.DefaultSocketModel{protocol.LOGIN, -1, RELOGIN_SRES, []byte(loginResult)})
+	fmt.Print("社么结果", loginResult)
 }
 
 //退出登录
@@ -144,7 +187,7 @@ func (this *Handler) reg(un *string, psw *string, phone *string) bool {
 
 //******************************************************************
 //                       登陆具体逻辑
-//如果登录成功返回用户级别，如果是企业用户返回企业名字，如果需要判断是否重登录则返回空字符串
+//如果登录成功//返回用户级别，如果是企业用户返回企业名字，如果需要判断是否重登录则返回空字符串
 //******************************************************************
 func (this *Handler) login(session *ace.Session, un *string, psw *string) string {
 	//错误处理
@@ -170,10 +213,11 @@ func (this *Handler) login(session *ace.Session, un *string, psw *string) string
 	if *psw == password {
 		//fmt.Printf("账号%s与密码%s匹配  ", *un, *psw)
 		//检验此账号是否已经登录
-		tempSession, ok := data.SyncAccount.AccountSession[*un] //****************
-		if ok {                                                 //如果能在此切片中取出值，说明已登录
-			go this.heartPackage(tempSession, session)
-			return USER_WAIT
+		_, ok := data.SyncAccount.AccountSession[*un] //****************
+		if ok {                                       //如果能在此切片中取出值，说明已登录
+			//go this.heartPackage(tempSession, session)
+
+			return USER_RELOGIN
 		} else { //可以登录
 			fmt.Println(*un, "<<<<<-------------可以登录")
 			stmtUp, err := db.Prepare("update userinfo set online=?,lasttime=? where username=?") //更新最后登录时间
@@ -183,19 +227,8 @@ func (this *Handler) login(session *ace.Session, un *string, psw *string) string
 			//此账号与session相关联
 			data.SyncAccount.AccountSession[*un] = session
 			data.SyncAccount.SessionAccount[session] = *un
-			//登陆成功:普通用户只返回等级
-			if level == "0" {
-				//userLevel, _ := strconv.Atoi(level)
-				return level
-			}
-			if level == "1" {
-				//userLevel, _ := strconv.Atoi(level)
-				return level + "&" + provider //经销商登陆成功
-			}
-			//登陆成功:企业用户返回等级+供应商名字
-			if level == "2" {
-				return level + "&" + provider //厂家登陆成功
-			}
+			//登陆成功
+			return level + "&" + provider //厂家登陆成功
 		}
 	} else {
 		fmt.Printf("账号密码不对")
@@ -204,27 +237,27 @@ func (this *Handler) login(session *ace.Session, un *string, psw *string) string
 	return USER_NO
 }
 
-//心跳包
-func (this *Handler) heartPackage(oldSession *ace.Session, newSession *ace.Session) {
-	//保存老的、新的session
-	this.OldNewSession[oldSession] = newSession
-	oldSession.Write(&ace.DefaultSocketModel{protocol.LOGIN, -1, HEART_PACKAGE_SREQ, []byte("are you there?")})
-	oldSession.IsColse = true
-	//3秒后判断心跳是否活跃
-	timer := time.NewTicker(time.Duration(2000) * time.Millisecond)
-	for {
-		select {
-		case <-timer.C:
-			//			fmt.Println("3秒到了")
-			//老的很活跃，通知新的不可以登陆
-			if oldSession.IsColse == false {
-				newSession.Write(&ace.DefaultSocketModel{protocol.LOGIN, -1, LOGIN_SREQ, []byte(USER_RELOGIN)})
-			} else { //老的不活跃，让客户端重新登陆
-				oldSession.Close()
-				newSession.Write(&ace.DefaultSocketModel{protocol.LOGIN, -1, RETRY_LOGIN_SREQ, []byte("")})
-			}
-			delete(this.OldNewSession, oldSession)
-		}
-		return
-	}
-}
+//旧的心跳包
+//func (this *Handler) heartPackage(oldSession *ace.Session, newSession *ace.Session) {
+//	//保存老的、新的session
+//	this.OldNewSession[oldSession] = newSession
+//	oldSession.Write(&ace.DefaultSocketModel{protocol.LOGIN, -1, HEART_PACKAGE_SREQ, []byte("are you there?")})
+//	oldSession.IsColse = true
+//	//3秒后判断心跳是否活跃
+//	timer := time.NewTicker(time.Duration(2000) * time.Millisecond)
+//	for {
+//		select {
+//		case <-timer.C:
+//			//			fmt.Println("3秒到了")
+//			//老的很活跃，通知新的不可以登陆
+//			if oldSession.IsColse == false {
+//				newSession.Write(&ace.DefaultSocketModel{protocol.LOGIN, -1, LOGIN_SREQ, []byte(USER_RELOGIN)})
+//			} else { //老的不活跃，让客户端重新登陆
+//				oldSession.Close()
+//				newSession.Write(&ace.DefaultSocketModel{protocol.LOGIN, -1, RETRY_LOGIN_SREQ, []byte("")})
+//			}
+//			delete(this.OldNewSession, oldSession)
+//		}
+//		return
+//	}
+//}

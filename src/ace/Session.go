@@ -8,40 +8,45 @@ import (
 )
 
 type Session struct {
-	Conn      net.Conn
-	Attribute map[string]string //特性
-	Encode    Encode
-	IsColse   bool
+	Conn        net.Conn
+	Attribute   map[string]string //特性
+	Encode      Encode
+	IsHandshake bool
+	IsColse     bool
 }
 
 func CreateSession(conn net.Conn, encode Encode) *Session {
-	return &Session{conn, make(map[string]string), encode, false}
+	var session = &Session{conn, make(map[string]string), encode, true, false}
+	go session.IsConnecting()
+	return session
 }
 
 func (session *Session) Close() { //会话的内存并没有删除？？？
 	session.Conn.Close()
 	session.IsColse = true
+	session.IsHandshake = false
+	session = nil
 }
 
 //判断当前会话是否通畅
-func (session *Session) IsConnecting() bool {
-	tempSlice := make([]byte, 1)
-	session.Conn.Write(tempSlice)
-	timer := time.NewTicker(time.Duration(1000) * time.Millisecond)
+func (session *Session) IsConnecting() {
+	//		tempSlice := make([]byte, 1)
+	//		session.Conn.Write(tempSlice)
+	timer := time.NewTicker(time.Duration(3000) * time.Millisecond)
 	for {
 		select {
 		case <-timer.C:
-			fmt.Println("一秒到了")
-			_, err := session.Conn.Write(tempSlice)
 
-			if err == nil { //确实是链接的
-				return true
-			} else { //已断开的假链接
-				return false
+			if session.IsHandshake == true { //握手了
+				fmt.Println("3秒到了,握手过")
+				session.IsHandshake = false
+			} else { //没有握手,视为掉线
+				fmt.Println("3秒到了,没有握手")
+				session.Close()
+				return
 			}
 		}
 	}
-	return true
 }
 
 //暂时用不到这两个方法
@@ -67,6 +72,7 @@ func (session *Session) Write(msg *DefaultSocketModel) {
 /**消息接收**/
 func (session *Session) Read(buffer []byte) (int, bool) {
 	//读取消息长度 错误则关闭客户端链接 并从客户端列表中移除客户端信息 否则返回长度
+	session.IsHandshake = true //标记为已握手
 	readLength, err := session.Conn.Read(buffer)
 	if err != nil {
 		session.Close()
