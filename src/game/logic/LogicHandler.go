@@ -45,9 +45,9 @@ func (this *GameHandler) MessageReceived(session *ace.Session, message interface
 	case protocol.USER: //客户数据
 		data.User.Process(session, m)
 		break
-	case protocol.HOUSE: //房子
-		//data.House.Process(session, m)
-		break
+		//	case protocol.HOUSE: //房子
+		//		//data.House.Process(session, m)
+		//		break
 	default:
 		fmt.Println("未知协议类型！")
 		break
