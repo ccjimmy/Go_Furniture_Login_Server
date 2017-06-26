@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"fmt"
+	//"fmt"
 
 	"github.com/astaxie/beego"
 )
@@ -11,9 +11,9 @@ type MainController struct {
 }
 
 func (c *MainController) Get() {
-	fmt.Println("来了")
-	c.Data["Website"] = "beego.me"
-	c.Data["Email"] = "astaxie@gmail.com"
+	//fmt.Println("来了")
+	//c.Data["Website"] = "beego.me"
+	//c.Data["Email"] = "astaxie@gmail.com"
 	//c.TplName = "index.tpl" //(文件、文件夹必须小写)
 
 	c.Ctx.WriteString("哈哈哈哈哈哈")

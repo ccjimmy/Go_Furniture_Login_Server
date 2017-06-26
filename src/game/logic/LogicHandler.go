@@ -5,8 +5,8 @@ import (
 	"ace"
 	"fmt"
 	"game/data"
-	//	"game/logic/User"
 	"game/logic/login"
+	"game/logic/msgMgr"
 	"game/logic/protocol"
 )
 
@@ -28,17 +28,21 @@ func (this *GameHandler) MessageReceived(session *ace.Session, message interface
 	m := message.(ace.DefaultSocketModel)
 	//fmt.Println("收到客户端的请求：", message)
 	switch m.Type {
-	case protocol.LOGIN: //收到登录消息
-		login.LoginHander.Process(session, m)
-		break
-		//	case protocol.USER: //客户数据
-		//		data.User.Process(session, m)
-		//		break
 	case protocol.HEART_PACKAGE_CREQ: //心跳
 		//session.Write(&ace.DefaultSocketModel{protocol.HEART_PACKAGE_SREQ, -1, -1, []byte("im server")})
 		break
+	case protocol.LOGIN: //收到登录消息
+		login.LoginHander.Process(session, m)
+		break
+	case protocol.MESSAGE: //消息相关
+		//		message.MessageHander.Process(session, m)
+		//		message.MessageHander.P
+		msgMgr.MsgMgrHander.Process(session, m)
+		break
+
 	default:
 		fmt.Println("未知协议类型！")
+		session.Write(&ace.DefaultSocketModel{88, -1, -1, []byte("im server")})
 		break
 	}
 }

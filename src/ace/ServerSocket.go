@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	MaxSocketSize = 20000
+	MaxSocketSize = 4000
+	port          = 10101
 )
 
 /**
@@ -37,7 +38,7 @@ func CreateServer() *ServerSocket {
 }
 
 //程序最开始调用的  开启服务器
-func (server *ServerSocket) Start(port int) {
+func (server *ServerSocket) Start() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	addr := fmt.Sprintf(":%d", port)
 	listener, err := net.Listen("tcp", addr) //开始网络监听
@@ -80,7 +81,7 @@ func clentConnection(session *Session, server *ServerSocket) {
 
 	server.handler.SessionOpen(session) //调用Handler的SessionOpen()方法
 	//数据缓存
-	databuf := make([]byte, 10240)
+	databuf := make([]byte, MaxSocketSize)
 	// 消息缓冲
 	msgbuf := bytes.NewBuffer(make([]byte, 0))
 	// 消息长度
@@ -105,6 +106,10 @@ func clentConnection(session *Session, server *ServerSocket) {
 				//fmt.Println("消息头中所写的长度", ulength)
 				//count++
 				//fmt.Println("收到信息条数", count)
+				if length > MaxSocketSize {
+					fmt.Printf("Message too length: %d\n", length)
+					return
+				}
 			}
 			// 消息体
 			if length > 0 && msgbuf.Len() >= length {

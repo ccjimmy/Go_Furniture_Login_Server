@@ -16,7 +16,7 @@ func main() {
 	server := ace.CreateServer()
 	//此Handler即LogicHandler文件
 	server.SetHandler(&logic.GameHandler{})
-	go server.Start(10101)
+	go server.Start()
 	orm.RegisterDataBase("default", "mysql", "root:@/furniture?charset=utf8", 30)
 	orm.SetMaxIdleConns("default", 30) //设置数据库最大空闲连接
 	orm.SetMaxOpenConns("default", 30) //设置数据库最大连接数

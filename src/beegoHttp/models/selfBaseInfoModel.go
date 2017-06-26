@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	//"fmt"
 
 	"github.com/astaxie/beego/orm"     //引入beego的orm
@@ -15,12 +16,26 @@ type SelfBaseInfoModel struct {
 	Description string
 }
 
-func (this *SelfBaseInfoModel) GetSelfBaseInfoModel(username string) SelfBaseInfoModel {
+//获取自己基本信息
+func (this *SelfBaseInfoModel) GetPersonBaseInfoModel(username string) SelfBaseInfoModel {
 	o := orm.NewOrm()
 	var data SelfBaseInfoModel
 	sql := "select username,nickname,face,description from userinfo where username =?"
 
 	o.Raw(sql, username).QueryRow(&data)
+	return data
+}
+
+//查找好友 根据账号或昵称
+func (this *SelfBaseInfoModel) FindFriends(username string) []SelfBaseInfoModel {
+	o := orm.NewOrm()
+	var data []SelfBaseInfoModel
+	sql := "select username,nickname,face,description from userinfo where username = ? or nickname like ?"
+
+	_, err := o.Raw(sql, username, "%"+username+"%").QueryRows(&data)
+	if err != nil {
+		fmt.Println(err)
+	}
 	return data
 }
 

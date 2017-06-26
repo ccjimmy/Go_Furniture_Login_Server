@@ -43,6 +43,7 @@ func (session *Session) IsConnecting() {
 			} else { //没有握手,视为掉线
 				fmt.Println("3秒到了,没有握手")
 				session.Close()
+				session = nil
 				return
 			}
 		}
