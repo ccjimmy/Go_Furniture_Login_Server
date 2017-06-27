@@ -18,4 +18,6 @@ func init() {
 	beego.Router("/findFriend", &controllers.FindFriendController{})
 	//拉取离线消息
 	beego.Router("/offlinemsg", &controllers.OfflineMsgController{})
+	//拉取好友列表
+	beego.Router("/friendList", &controllers.FriendListController{})
 }

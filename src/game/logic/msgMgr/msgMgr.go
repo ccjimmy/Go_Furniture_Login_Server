@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"game/data"
 	"game/logic/protocol"
-	//"time"
 	"strings"
 	"tools"
 
@@ -24,6 +23,10 @@ const ( //协议类型
 	AGREE_ADD_FRIEND_CREQ = 3 //同意加好友
 	AGREE_ADD_FRIEND_SRES = 4 //同意加好友的响应
 	ONE_AGREED_YOU        = 5 //别人同意了你的申请
+
+	DELETE_FRIEND_CREQ = 6 //删除好友
+	DELETE_FRIEND_SRES = 7 //删除好友的响应
+	YOU_BE_DELETED     = 8 //你被删除好友了
 )
 
 //消息数据结构
@@ -52,6 +55,12 @@ func (this *MsgMgr) Process(session *ace.Session, message ace.DefaultSocketModel
 		break
 	case AGREE_ADD_FRIEND_CREQ: //同意加好友
 		this.AGREE_ADD_FRIEND(session, msgModel)
+		break
+	case DELETE_FRIEND_CREQ: //删除好友
+		this.DELETE_FRIEND_CREQ(session, msgModel)
+		break
+	default:
+		fmt.Println("消息管理器：未知消息协议类型")
 		break
 	}
 }
@@ -95,20 +104,19 @@ func (this *MsgMgr) AGREE_ADD_FRIEND(session *ace.Session, message *MessageModel
 			return
 		}
 	}()
-	//回复同意的人
 	//更新好友列表
 	updateFriendList(message.From, message.To, 0)
+	updateFriendList(message.To, message.From, 0)
+	//回复同意的人
 	message.MsgType = AGREE_ADD_FRIEND_SRES
 	response, _ := json.Marshal(*message)
 	session.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, AGREE_ADD_FRIEND_SRES, response})
 
 	//回复申请的人
-	var isHeOnLine bool = false
 	//遍历在线人员
+	var isHeOnLine bool = false
 	for otherSe, acc := range data.SyncAccount.SessionAccount {
 		if message.To == acc {
-			//更新好友列表
-			updateFriendList(message.To, message.From, 0)
 			message.MsgType = ONE_AGREED_YOU //别人同意了你的申请
 			response, _ := json.Marshal(*message)
 			otherSe.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, ONE_AGREED_YOU, response})
@@ -150,7 +158,17 @@ func updateFriendList(self string, other string, op int) { //op=0是增加好友
 		_, err = stmtUp.Exec(friends, self)
 		tools.CheckErr(err)
 	} else { //删除好友
-
+		newFriendList := ""
+		friendsArr := strings.Split(friends, ",")
+		for _, v := range friendsArr {
+			if v != other && v != "" {
+				newFriendList += v + ","
+			}
+		}
+		stmtUp, err := db.Prepare("update userdata set friends=? where username=?") //更新好友列表
+		tools.CheckErr(err)
+		_, err = stmtUp.Exec(newFriendList, self)
+		tools.CheckErr(err)
 	}
 }
 
@@ -172,13 +190,73 @@ func saveOffLineMessage(msgModel *MessageModel) { //to不在线，存给to
 	if err != nil {
 		fmt.Println(err)
 	}
+	//追加
+	if msgModel.MsgType == ONE_ADD_YOU_SRES { //重复的加好友，不需要写入数据库
+		for _, v := range tempSlice {
+			if v.MsgType == ONE_ADD_YOU_SRES && v.From == msgModel.From {
+				fmt.Println("重复的加好友，不需要写入数据库")
+				return
+			}
+		}
+	}
+	if msgModel.MsgType == ONE_AGREED_YOU { //重复的同意加好友，不需要写入数据库
+		for _, v := range tempSlice {
+			if v.MsgType == ONE_AGREED_YOU && v.From == msgModel.From {
+				fmt.Println("重复的同意加好友，不需要写入数据库")
+				return
+			}
+		}
+	}
+	if msgModel.MsgType == YOU_BE_DELETED { //重复的你被删除好友，不需要写入数据库
+		for _, v := range tempSlice {
+			if v.MsgType == YOU_BE_DELETED && v.From == msgModel.From {
+				fmt.Println("重复的被删除好友，不需要写入数据库")
+				return
+			}
+		}
+	}
 
 	tempSlice = append(tempSlice, *msgModel)
+	//更新数据库
 	newofflinemsg, _ := json.Marshal(tempSlice)
 	fmt.Println("最新的离线消息列表 ", string(newofflinemsg))
-	//更新数据库
 	stmtUp, err := db.Prepare("update userdata set offlinemsg=? where username=?") //更新好友列表
 	tools.CheckErr(err)
 	_, err = stmtUp.Exec(string(newofflinemsg), msgModel.To)
 	tools.CheckErr(err)
+}
+
+//删除好友
+func (this *MsgMgr) DELETE_FRIEND_CREQ(session *ace.Session, message *MessageModel) {
+	defer func() {
+		if r := recover(); r != nil {
+			return
+		}
+	}()
+	//互相删除好友列表
+	updateFriendList(message.From, message.To, 1)
+	updateFriendList(message.To, message.From, 1)
+
+	var isHeOnLine bool = false
+	//遍历在线人员
+	for otherSe, acc := range data.SyncAccount.SessionAccount {
+		if message.To == acc {
+			message.MsgType = YOU_BE_DELETED
+			response, _ := json.Marshal(*message)
+			otherSe.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, YOU_BE_DELETED, response})
+			isHeOnLine = true
+			break
+		}
+	}
+	//不在线则存入数据库
+	if isHeOnLine == false {
+		fmt.Println("要申请的人不在线")
+		var offlineMsg = message
+		offlineMsg.MsgType = YOU_BE_DELETED
+		saveOffLineMessage(message)
+	}
+	//给自己的响应
+	message.MsgType = DELETE_FRIEND_SRES
+	response, _ := json.Marshal(*message)
+	session.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, message.MsgType, response})
 }
