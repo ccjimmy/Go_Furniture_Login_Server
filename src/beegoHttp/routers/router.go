@@ -19,5 +19,10 @@ func init() {
 	//拉取离线消息
 	beego.Router("/offlinemsg", &controllers.OfflineMsgController{})
 	//拉取好友列表
+
 	beego.Router("/friendList", &controllers.FriendListController{})
+	//拉取群组列表
+	beego.Router("/groupList", &controllers.GroupListController{})
+	//拉取一个群的基本信息
+	beego.Router("/groupBaseInfo", &controllers.GroupBaseInfoController{})
 }

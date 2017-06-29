@@ -25,6 +25,13 @@ func (this *GameHandler) SessionClose(session *ace.Session) {
 }
 
 func (this *GameHandler) MessageReceived(session *ace.Session, message interface{}) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("LogicHandler处理消息异常:-------------------》》》", r)
+			return
+		}
+	}()
+
 	m := message.(ace.DefaultSocketModel)
 	//fmt.Println("收到客户端的请求：", message)
 	switch m.Type {
@@ -35,11 +42,8 @@ func (this *GameHandler) MessageReceived(session *ace.Session, message interface
 		login.LoginHander.Process(session, m)
 		break
 	case protocol.MESSAGE: //消息相关
-		//		message.MessageHander.Process(session, m)
-		//		message.MessageHander.P
 		msgMgr.MsgMgrHander.Process(session, m)
 		break
-
 	default:
 		fmt.Println("未知协议类型！")
 		session.Write(&ace.DefaultSocketModel{88, -1, -1, []byte("im server")})

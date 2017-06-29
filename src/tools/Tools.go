@@ -62,6 +62,6 @@ func ReadAll() {
 func CheckErr(e error) {
 	if e != nil {
 		fmt.Println("Err------------->>:", e)
-		panic(e)
+		//	panic(e)
 	}
 }

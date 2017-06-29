@@ -121,7 +121,6 @@ func (this *Handler) ReLoginProcess(session *ace.Session, message ace.DefaultSoc
 		if r := recover(); r != nil {
 			//有错误的话将返回"err"
 			session.Write(&ace.DefaultSocketModel{protocol.LOGIN, -1, RELOGIN_SRES, []byte("err")})
-			fmt.Print("社么结果err")
 		}
 	}()
 	//解开json
@@ -135,7 +134,6 @@ func (this *Handler) ReLoginProcess(session *ace.Session, message ace.DefaultSoc
 	loginResult := this.login(session, &loginData.Username, &loginData.Password)
 	//登录结果 响应
 	session.Write(&ace.DefaultSocketModel{protocol.LOGIN, -1, RELOGIN_SRES, []byte(loginResult)})
-	fmt.Print("社么结果", loginResult)
 }
 
 //退出登录

@@ -5,6 +5,7 @@ import (
 	"ace"
 	_ "beegoHttp/routers"
 	_ "bufio"
+
 	"game/logic"
 	_ "os"
 
@@ -13,6 +14,7 @@ import (
 )
 
 func main() {
+
 	server := ace.CreateServer()
 	//此Handler即LogicHandler文件
 	server.SetHandler(&logic.GameHandler{})

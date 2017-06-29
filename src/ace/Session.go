@@ -2,7 +2,6 @@
 package ace
 
 import (
-	"fmt"
 	"net"
 	"time"
 )
@@ -37,13 +36,12 @@ func (session *Session) IsConnecting() {
 		select {
 		case <-timer.C:
 
-			if session.IsHandshake == true { //握手了
-				fmt.Println("3秒到了,握手过")
+			if session.IsHandshake == true {
+				//fmt.Println("3秒到了,握手过")
 				session.IsHandshake = false
 			} else { //没有握手,视为掉线
-				fmt.Println("3秒到了,没有握手")
+				//fmt.Println("3秒到了,没有握手")
 				session.Close()
-				session = nil
 				return
 			}
 		}
