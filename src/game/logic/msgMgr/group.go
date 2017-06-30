@@ -43,6 +43,9 @@ func (this *Group) Process(session *ace.Session, msgModel *MessageModel) {
 	case AGREE_ADD_GROUP_CREQ: //群主同意入群
 		this.AGREE_ADD_GROUP_CREQ(session, msgModel)
 		break
+	case QUIT_GROUP_CREQ: //退出一个群
+		this.QUIT_GROUP_CREQ(session, msgModel)
+		break
 	default:
 		fmt.Println("未知群消息类型")
 		break
@@ -229,6 +232,17 @@ func (this *Group) AGREE_ADD_GROUP_CREQ(session *ace.Session, msgModel *MessageM
 	session.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, AGREE_ADD_GROUP_SRES, response})
 }
 
+//退群
+func (this *Group) QUIT_GROUP_CREQ(session *ace.Session, msgModel *MessageModel) {
+	gid, _ := strconv.Atoi(msgModel.To)
+	personalInfoRemoveGroup(msgModel.From, gid)
+	removeMember(gid, msgModel.From)
+	//响应
+	msgModel.MsgType = QUIT_GROUP_SRES
+	response, _ := json.Marshal(*msgModel)
+	session.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, QUIT_GROUP_SRES, response})
+}
+
 //个人信息中加入这个群
 func personalInfoAddGroup(user string, gid int, receiveMode int) {
 	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/furniture?charset=utf8")
@@ -274,6 +288,43 @@ func personalInfoAddGroup(user string, gid int, receiveMode int) {
 	}
 }
 
+//个人信息中移除这个群
+func personalInfoRemoveGroup(user string, gid int) {
+	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/furniture?charset=utf8")
+	defer db.Close()
+	if err != nil {
+		fmt.Println(err)
+	}
+	//获取已存在群数据
+	stmtOut, err := db.Prepare("SELECT groups FROM userdata WHERE username = ?")
+	var groups string
+	err = stmtOut.QueryRow(user).Scan(&groups)
+	if err != nil {
+		fmt.Println("他之前没有群", err)
+	}
+	fmt.Println("之前的群是：", groups)
+	tempSlice := []MyGroupModel{}
+	//解开json,变成切片
+	err = json.Unmarshal([]byte(groups), &tempSlice)
+	if err != nil {
+		fmt.Println(err)
+	}
+	newGroupSlice := []MyGroupModel{}
+	for _, v := range tempSlice {
+		if v.GroupID != gid {
+			newGroupSlice = append(newGroupSlice, v)
+		}
+	}
+	//更新数据库
+	newGroups, _ := json.Marshal(newGroupSlice)
+	fmt.Println("最新的群列表 ", string(newGroups))
+	stmtUp, err := db.Prepare("update userdata set groups=? where username=?") //更新好友列表
+	_, err = stmtUp.Exec(string(newGroups), user)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
 //群增加新成员
 func addMember(gid int, newMember string) {
 	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/furniture?charset=utf8")
@@ -304,6 +355,41 @@ func addMember(gid int, newMember string) {
 	fmt.Println("之后的成员是:" + member)
 	stmtUp, err := db.Prepare("update groups set member=? where gid=?")
 	_, err = stmtUp.Exec(member, gid)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+//移除成员
+func removeMember(gid int, removeMember string) {
+	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/furniture?charset=utf8")
+	defer db.Close()
+	if err != nil {
+		fmt.Println(err)
+	}
+	//获取之前的群成员
+	member := ""
+	stmtOut, err := db.Prepare("SELECT member FROM groups where gid =?")
+	if err != nil {
+		fmt.Println(err)
+	}
+	err = stmtOut.QueryRow(gid).Scan(&member)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("之前的成员是:" + member)
+	newMemberList := ""
+	memberArr := strings.Split(member, ",")
+	for _, v := range memberArr {
+		if v != "" && v != removeMember {
+			newMemberList += v + ","
+			return
+		}
+	}
+	//更新成员列表
+	fmt.Println("之后的成员是:" + newMemberList)
+	stmtUp, err := db.Prepare("update groups set member=? where gid=?")
+	_, err = stmtUp.Exec(newMemberList, gid)
 	if err != nil {
 		fmt.Println(err)
 	}

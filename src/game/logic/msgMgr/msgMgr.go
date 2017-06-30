@@ -35,6 +35,8 @@ const ( //协议类型
 	AGREE_ADD_GROUP_CREQ      = 35 //群主同意申请入群
 	AGREE_ADD_GROUP_SRES      = 36 //群主同意申请入群的响应
 	YOU_BE_AGREED_ENTER_GROUP = 37 //你被同意入群
+	QUIT_GROUP_CREQ           = 38 //退出一个群
+	QUIT_GROUP_SRES           = 39 //退出一个群的响应
 )
 
 //消息数据结构
