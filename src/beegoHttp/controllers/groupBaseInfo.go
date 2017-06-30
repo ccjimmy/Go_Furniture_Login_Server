@@ -24,6 +24,6 @@ func (c *GroupBaseInfoController) Get() {
 
 	jsons, _ := json.Marshal(groupInfo)
 
-	//fmt.Println("群的信息是：", string(jsons))
+	fmt.Println("群的信息是：", string(jsons))
 	c.Ctx.WriteString(string(jsons))
 }

@@ -37,12 +37,36 @@ func (this *Friend) Process(session *ace.Session, msgModel *MessageModel) {
 
 //申请添加好友
 func (this *Friend) ADD_FRIEND_CREQ(session *ace.Session, message *MessageModel) {
+	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/furniture?charset=utf8")
+	defer db.Close()
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("添加好友时异常:-------------》》》", r)
 			return
 		}
 	}()
+	//先判断是否已经是好友关系
+	friends := ""
+	stmtOut, err := db.Prepare("SELECT friends FROM userdata where username =?")
+	if err != nil {
+		fmt.Println(err)
+	}
+	err = stmtOut.QueryRow(message.From).Scan(&friends)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("之前的好友是:" + friends)
+	friendArr := strings.Split(friends, ",")
+	for _, v := range friendArr {
+		if v == message.To {
+			fmt.Println("非法的好友申请，已拥有这个好友")
+			return
+		}
+	}
 
 	var isHeOnLine bool = false
 	//遍历在线人员
@@ -61,7 +85,7 @@ func (this *Friend) ADD_FRIEND_CREQ(session *ace.Session, message *MessageModel)
 		//申请加好友消息--->有人加你消息
 		var offlineMsg = message
 		offlineMsg.MsgType = ONE_ADD_YOU_SRES
-		saveOffLineMessage(message)
+		saveOffLineMessage(&message.To, message)
 	}
 	//给自己的响应
 	message.MsgType = ADD_FRIEND_SRES
@@ -102,7 +126,7 @@ func (this *Friend) AGREE_ADD_FRIEND(session *ace.Session, message *MessageModel
 		//同意加好友--->别人同意了你的申请
 		var offlineMsg = message
 		offlineMsg.MsgType = ONE_AGREED_YOU
-		saveOffLineMessage(message)
+		saveOffLineMessage(&message.To, message)
 	}
 }
 
@@ -133,7 +157,7 @@ func (this *Friend) DELETE_FRIEND_CREQ(session *ace.Session, message *MessageMod
 		fmt.Println("要申请的人不在线")
 		var offlineMsg = message
 		offlineMsg.MsgType = YOU_BE_DELETED
-		saveOffLineMessage(message)
+		saveOffLineMessage(&message.To, message)
 	}
 	//给自己的响应
 	message.MsgType = DELETE_FRIEND_SRES
@@ -177,61 +201,4 @@ func updateFriendList(self string, other string, op int) { //op=0是增加好友
 		_, err = stmtUp.Exec(newFriendList, self)
 		tools.CheckErr(err)
 	}
-}
-
-//不在线时保存离线消息
-func saveOffLineMessage(msgModel *MessageModel) { //to不在线，存给to
-	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/furniture?charset=utf8")
-	defer db.Close()
-	tools.CheckErr(err)
-	//获取已存在离线消息
-	stmtOut, err := db.Prepare("SELECT offlinemsg FROM userdata WHERE username = ?")
-	var offlinemsg string
-	err = stmtOut.QueryRow(msgModel.To).Scan(&offlinemsg)
-	if err != nil {
-		fmt.Println("这里有问题，他之前没有离线消息", err)
-	}
-	tools.CheckErr(err)
-	fmt.Println("之前的离线消息是：", offlinemsg)
-	tempSlice := []MessageModel{}
-
-	//解开json,变成切片
-	err = json.Unmarshal([]byte(offlinemsg), &tempSlice)
-	if err != nil {
-		fmt.Println(err)
-	}
-	//追加
-	if msgModel.MsgType == ONE_ADD_YOU_SRES { //重复的加好友，不需要写入数据库
-		for _, v := range tempSlice {
-			if v.MsgType == ONE_ADD_YOU_SRES && v.From == msgModel.From {
-				fmt.Println("重复的加好友，不需要写入数据库")
-				return
-			}
-		}
-	}
-	if msgModel.MsgType == ONE_AGREED_YOU { //重复的同意加好友，不需要写入数据库
-		for _, v := range tempSlice {
-			if v.MsgType == ONE_AGREED_YOU && v.From == msgModel.From {
-				fmt.Println("重复的同意加好友，不需要写入数据库")
-				return
-			}
-		}
-	}
-	if msgModel.MsgType == YOU_BE_DELETED { //重复的你被删除好友，不需要写入数据库
-		for _, v := range tempSlice {
-			if v.MsgType == YOU_BE_DELETED && v.From == msgModel.From {
-				fmt.Println("重复的被删除好友，不需要写入数据库")
-				return
-			}
-		}
-	}
-
-	tempSlice = append(tempSlice, *msgModel)
-	//更新数据库
-	newofflinemsg, _ := json.Marshal(tempSlice)
-	fmt.Println("最新的离线消息列表 ", string(newofflinemsg))
-	stmtUp, err := db.Prepare("update userdata set offlinemsg=? where username=?") //更新好友列表
-	tools.CheckErr(err)
-	_, err = stmtUp.Exec(string(newofflinemsg), msgModel.To)
-	tools.CheckErr(err)
 }
