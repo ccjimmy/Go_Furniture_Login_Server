@@ -96,8 +96,7 @@ func clentConnection(session *Session, server *ServerSocket) {
 			fmt.Printf("Buffer write error: %s\n", err)
 			return
 		}
-		//fmt.Println("数据缓存(前面会有乱码，是长度信息的4位所导致):", msgbuf)
-
+		//	fmt.Println("数据缓存(前面会有乱码，是长度信息的4位所导致):", msgbuf)
 		for { // 消息分割循环
 			// 获取消息头
 			if length == 0 && msgbuf.Len() >= 4 {

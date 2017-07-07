@@ -2,6 +2,7 @@
 package ace
 
 import (
+	//	"fmt"
 	"net"
 	"time"
 )
@@ -77,6 +78,6 @@ func (session *Session) Read(buffer []byte) (int, bool) {
 		session.Close()
 		return 0, false
 	}
-	//fmt.Println("Session中读取到数据，这里应该最先运行，随后应该是解码")
+	//	fmt.Println("Session中读取到数据，这里应该最先运行，随后应该是解码", buffer)
 	return readLength, true
 }

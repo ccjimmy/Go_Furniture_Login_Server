@@ -1,7 +1,7 @@
 // Default
 package ace
 
-//	"fmt"
+//"fmt"
 
 type DefaultDecode struct {
 }
@@ -31,7 +31,7 @@ func (encode *DefaultEncode) Encode(msg interface{}) []byte {
 	buffer.WriteInt(m.Area)
 	buffer.WriteInt(m.Command)
 	buffer.WriteBytes(m.Message)
-	//fmt.Println("编码------>把对象转成[]byte:", buffer.Bytes())
+	//	fmt.Println("编码------>把对象转成[]byte:", buffer.Bytes())
 	return buffer.Bytes()
 }
 
