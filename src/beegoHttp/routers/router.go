@@ -7,7 +7,8 @@ import (
 )
 
 func init() {
-
+	//winform更新
+	beego.Router("/winUpdate", &controllers.WinUpdateController{})
 	//默认路由
 	beego.Router("/", &controllers.MainController{})
 	//一个人的基本信息
