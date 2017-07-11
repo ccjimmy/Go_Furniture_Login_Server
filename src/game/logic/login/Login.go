@@ -226,7 +226,7 @@ func (this *Handler) login(session *ace.Session, un *string, psw *string) string
 			data.SyncAccount.AccountSession[*un] = session
 			data.SyncAccount.SessionAccount[session] = *un
 			//登陆成功
-			return level + "&" + provider //厂家登陆成功
+			return *un
 		}
 	} else {
 		fmt.Printf("账号密码不对")
