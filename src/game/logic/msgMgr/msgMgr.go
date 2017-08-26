@@ -37,6 +37,11 @@ const ( //协议类型
 	YOU_BE_AGREED_ENTER_GROUP = 37 //你被同意入群
 	QUIT_GROUP_CREQ           = 38 //退出一个群
 	QUIT_GROUP_SRES           = 39 //退出一个群的响应
+
+	CHAT_ME_TO_FRIEND_CREQ = 100 //和好友聊天
+	CHAT_ME_TO_FRIEND_SRES = 101 //和好友聊天的响应
+
+	CHAT_FRIEND_TO_ME_SREQ = 102 //好友和我聊天
 )
 
 //消息数据结构
@@ -67,7 +72,7 @@ func (this *MsgMgr) Process(session *ace.Session, message ace.DefaultSocketModel
 		GroupHander.Process(session, msgModel)
 		break
 	case CHAT: //聊天相关
-
+		ChatHander.Process(session, msgModel)
 		break
 	default:
 		fmt.Println("消息管理器：未知消息协议类型")

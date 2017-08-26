@@ -94,6 +94,7 @@ func clentConnection(session *Session, server *ServerSocket) {
 		_, err := msgbuf.Write(databuf[:bytelength]) // 数据添加到消息缓冲
 		if err != nil {
 			fmt.Printf("Buffer write error: %s\n", err)
+			server.handler.SessionClose(session)
 			return
 		}
 		//	fmt.Println("数据缓存(前面会有乱码，是长度信息的4位所导致):", msgbuf)
@@ -107,6 +108,7 @@ func clentConnection(session *Session, server *ServerSocket) {
 				//fmt.Println("收到信息条数", count)
 				if length > MaxSocketSize {
 					fmt.Printf("Message too length: %d\n", length)
+					server.handler.SessionClose(session)
 					return
 				}
 			}

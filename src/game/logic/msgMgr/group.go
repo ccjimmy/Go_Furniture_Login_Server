@@ -173,16 +173,18 @@ func (this *Group) ADD_GROUP_CREQ(session *ace.Session, msgModel *MessageModel) 
 			msgModel.MsgType = ONE_WANT_ADD_GROUP_SRES
 			saveOffLineMessage(&master, msgModel)
 
-			msgModel.MsgType = ADD_GROUP_SRES
-			msgModel.Content = "申请已经发出，请等待群主审核。"
-			response, _ := json.Marshal(*msgModel)
-			session.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, ADD_GROUP_SRES, response})
-			return
+			//	return
 		} else { //群主在线
 			msgModel.MsgType = ONE_WANT_ADD_GROUP_SRES
 			response, _ := json.Marshal(*msgModel)
 			masterSession.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, ONE_WANT_ADD_GROUP_SRES, response})
 		}
+		//给申请人的回应
+		msgModel.MsgType = ADD_GROUP_SRES
+		msgModel.Content = "申请已经发出，请等待群主审核。"
+		response, _ := json.Marshal(*msgModel)
+		session.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, ADD_GROUP_SRES, response})
+		fmt.Println("给申请人响应")
 		return
 	}
 	/////////////////////////////////////////////////////无需验证
