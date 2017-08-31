@@ -76,7 +76,7 @@ func (session *Session) Read(buffer []byte) (int, bool) {
 	session.IsHandshake = true //标记为已握手
 	readLength, err := session.Conn.Read(buffer)
 	if err != nil {
-		fmt.Println("读取数据时发生错误！")
+		fmt.Println("读取数据时发生错误！客户端离开了。")
 		session.Close()
 		return 0, false
 	}

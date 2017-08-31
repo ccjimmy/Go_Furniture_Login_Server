@@ -26,4 +26,6 @@ func init() {
 	beego.Router("/groupList", &controllers.GroupListController{})
 	//拉取一个群的基本信息
 	beego.Router("/groupBaseInfo", &controllers.GroupBaseInfoController{})
+	//拉取群成员
+	beego.Router("/groupMembers", &controllers.GroupMemberController{})
 }
