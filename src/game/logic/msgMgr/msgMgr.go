@@ -37,11 +37,14 @@ const ( //协议类型
 	YOU_BE_AGREED_ENTER_GROUP = 37 //你被同意入群
 	QUIT_GROUP_CREQ           = 38 //退出一个群
 	QUIT_GROUP_SRES           = 39 //退出一个群的响应
-
+	//聊天
 	CHAT_ME_TO_FRIEND_CREQ = 100 //和好友聊天
 	CHAT_ME_TO_FRIEND_SRES = 101 //和好友聊天的响应
-
 	CHAT_FRIEND_TO_ME_SREQ = 102 //好友和我聊天
+	//群聊
+	CHAT_ME_TO_GROUP_CREQ = 110
+	CHAT_ME_TO_GROUP_SRES = 111
+	CHAT_GROUP_TO_ME_SRES = 112
 )
 
 //消息数据结构

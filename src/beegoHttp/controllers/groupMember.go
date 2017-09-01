@@ -23,9 +23,7 @@ type groupMembers struct {
 func (c *GroupMemberController) Get() {
 
 	mems := c.GetGroupMember(c.GetString("gid"))
-	fmt.Println("你好", (*mems).Member)
 	jsons, _ := json.Marshal((*mems))
-
 	fmt.Println("群成员的信息是：", string(jsons))
 	c.Ctx.WriteString(string(jsons))
 }

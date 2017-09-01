@@ -11,7 +11,7 @@ import (
 	"game/logic/protocol"
 	//	"strconv"
 	//	//	"tools"
-	//	"strings"
+	"strings"
 	//	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -27,9 +27,9 @@ func (this *Chat) Process(session *ace.Session, msgModel *MessageModel) {
 	case CHAT_ME_TO_FRIEND_CREQ: //我和朋友聊天
 		this.CHAT_ME_TO_FRIEND(session, msgModel)
 		break
-	//case CHAT_FRIEND_TO_ME: //朋友和我聊天
-	//this.CHAT_FRIEND_TO_ME(session, msgModel)
-	//	break
+	case CHAT_ME_TO_GROUP_CREQ: //我向群聊天
+		this.CHAT_ME_TO_GROUP(session, msgModel)
+		break
 
 	default:
 		fmt.Println("未知聊天消息类型")
@@ -59,4 +59,30 @@ func (this *Chat) CHAT_ME_TO_FRIEND(session *ace.Session, msgModel *MessageModel
 	msgModel.MsgType = CHAT_ME_TO_FRIEND_SRES
 	response, _ := json.Marshal(*msgModel)
 	session.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, CHAT, response})
+}
+
+//我向群聊天
+func (this *Chat) CHAT_ME_TO_GROUP(session *ace.Session, msgModel *MessageModel) {
+
+	group := GroupMgr.GetOneGroupManager(msgModel.To)
+	group.OnGroupActive()
+	//把消息分发给所有成员
+	msgModel.MsgType = CHAT_GROUP_TO_ME_SRES
+	response, _ := json.Marshal(*msgModel) //转发给所有人的消息
+
+	allMembers := group.Master + "," + group.Managers + "," + group.Members
+	allMembersArr := strings.Split(allMembers, ",")
+	count := 0
+	for _, v := range allMembersArr {
+		if v != "" { //得到每一个人
+
+			fmt.Println("群成员", v)
+			memSe, ok := data.SyncAccount.AccountSession[v]
+			if ok { //如果这个人在线
+				count++
+				memSe.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, CHAT, response})
+			}
+		}
+	}
+	fmt.Println("群发", count, "条消息")
 }
