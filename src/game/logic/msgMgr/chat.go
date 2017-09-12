@@ -61,14 +61,14 @@ func (this *Chat) CHAT_ME_TO_FRIEND(session *ace.Session, msgModel *MessageModel
 	session.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, CHAT, response})
 }
 
-//我向群聊天
+//向群聊天
 func (this *Chat) CHAT_ME_TO_GROUP(session *ace.Session, msgModel *MessageModel) {
 
 	group := GroupMgr.GetOneGroupManager(msgModel.To)
-	group.OnGroupActive()
+	group.OnGroupActive(msgModel)
 	//把消息分发给所有成员
-	msgModel.MsgType = CHAT_GROUP_TO_ME_SRES
-	response, _ := json.Marshal(*msgModel) //转发给所有人的消息
+	msgModel.MsgType = CHAT_GROUP_TO_ME_SRES //转换类型
+	response, _ := json.Marshal(*msgModel)   //转发给所有人的消息
 
 	allMembers := group.Master + "," + group.Managers + "," + group.Members
 	allMembersArr := strings.Split(allMembers, ",")

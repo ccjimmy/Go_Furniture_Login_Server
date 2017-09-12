@@ -108,8 +108,7 @@ func clentConnection(session *Session, server *ServerSocket) {
 				//fmt.Println("收到信息条数", count)
 				if length > MaxSocketSize {
 					fmt.Printf("Message too length: %d\n", length)
-					server.handler.SessionClose(session)
-					return
+					session.Close()
 				}
 			}
 			// 消息体

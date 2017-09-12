@@ -80,11 +80,11 @@ func (this *Group) CREATE_GROUP_CREQ(session *ace.Session, msgModel *MessageMode
 	groupID = groupID + 1
 	fmt.Println("群号是", groupID)
 	//数据库中加入这个群
-	stmt, err := db.Prepare("INSERT groups SET gid=?,name=?,face=?,level=?,master=?,manager=?,member=?,verifymode=?,createdtime=?")
+	stmt, err := db.Prepare("INSERT groups SET gid=?,name=?,face=?,level=?,master=?,manager=?,member=?,verifymode=?,history=?,createdtime=?")
 	if err != nil {
 		fmt.Println(err)
 	}
-	_, err = stmt.Exec(0, createGroupModel.Groupname, "default.jpg", 0, msgModel.From, "", "", createGroupModel.VerifyModel, time.Now().Format("2006-01-02 15:04:05"))
+	_, err = stmt.Exec(0, createGroupModel.Groupname, "default.jpg", 0, msgModel.From, "", "", createGroupModel.VerifyModel, "[]", time.Now().Format("2006-01-02 15:04:05"))
 	if err != nil {
 		fmt.Println(err)
 	}

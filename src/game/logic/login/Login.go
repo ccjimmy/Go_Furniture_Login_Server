@@ -217,6 +217,7 @@ func (this *Handler) login(session *ace.Session, un *string, psw *string) string
 
 			return USER_RELOGIN
 		} else { //可以登录
+
 			fmt.Println(*un, "<<<<<-------------可以登录")
 			stmtUp, err := db.Prepare("update userinfo set online=?,lasttime=? where username=?") //更新最后登录时间
 			tools.CheckErr(err)
