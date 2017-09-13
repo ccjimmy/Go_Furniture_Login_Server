@@ -76,7 +76,7 @@ func (this *Chat) CHAT_ME_TO_GROUP(session *ace.Session, msgModel *MessageModel)
 	for _, v := range allMembersArr {
 		if v != "" { //得到每一个人
 
-			fmt.Println("群成员", v)
+			//	fmt.Println("群成员", v)
 			memSe, ok := data.SyncAccount.AccountSession[v]
 			if ok { //如果这个人在线
 				count++

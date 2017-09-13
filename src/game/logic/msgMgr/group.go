@@ -185,10 +185,9 @@ func (this *Group) ADD_GROUP_CREQ(session *ace.Session, msgModel *MessageModel) 
 		response, _ := json.Marshal(*msgModel)
 		session.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, ADD_GROUP_SRES, response})
 		fmt.Println("给申请人响应")
-		return
-	}
-	/////////////////////////////////////////////////////无需验证
-	if verifymodel == 1 {
+
+	} else /////////////////////////////////////////////////////无需验证
+	{
 		gid, _ := strconv.Atoi(msgModel.To)
 		//添加群成员
 		addMember(gid, msgModel.From)
@@ -204,7 +203,11 @@ func (this *Group) ADD_GROUP_CREQ(session *ace.Session, msgModel *MessageModel) 
 		msgModel.Content = string(newContent)
 		response, _ := json.Marshal(*msgModel)
 		session.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, ADD_GROUP_SRES, response})
-		return
+		//通知群成员刷新群成员列表
+		refreshMember := &MessageModel{REFRESH_GROUP_MEMBERS, "", "", msgModel.To, ""}
+		fmt.Println("有新人加入，通知群员刷新成员列表")
+		GroupMgr.Broadcast(msgModel.To, refreshMember)
+		GroupMgr.ChangeMember(msgModel.To, msgModel.From, 1)
 	}
 }
 
@@ -232,6 +235,11 @@ func (this *Group) AGREE_ADD_GROUP_CREQ(session *ace.Session, msgModel *MessageM
 	msgModel.MsgType = AGREE_ADD_GROUP_SRES
 	response, _ := json.Marshal(*msgModel)
 	session.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, AGREE_ADD_GROUP_SRES, response})
+	//通知群成员刷新群成员列表
+	refreshMember := &MessageModel{REFRESH_GROUP_MEMBERS, "", "", msgModel.To, ""}
+	fmt.Println("有新人加入，通知群员刷新成员列表")
+	GroupMgr.Broadcast(msgModel.To, refreshMember)
+	GroupMgr.ChangeMember(msgModel.To, msgModel.From, 1)
 }
 
 //退群
@@ -243,6 +251,11 @@ func (this *Group) QUIT_GROUP_CREQ(session *ace.Session, msgModel *MessageModel)
 	msgModel.MsgType = QUIT_GROUP_SRES
 	response, _ := json.Marshal(*msgModel)
 	session.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, QUIT_GROUP_SRES, response})
+	//通知群成员刷新群成员列表
+	refreshMember := &MessageModel{REFRESH_GROUP_MEMBERS, "", "", msgModel.To, ""}
+	fmt.Println("有人退出，通知群员刷新成员列表")
+	GroupMgr.Broadcast(msgModel.To, refreshMember)
+	GroupMgr.ChangeMember(msgModel.To, msgModel.From, 0)
 }
 
 //个人信息中加入这个群
@@ -379,17 +392,16 @@ func removeMember(gid int, removeMember string) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println("之前的成员是:" + member)
+	//fmt.Println("之前的成员是:" + member)
 	newMemberList := ""
 	memberArr := strings.Split(member, ",")
 	for _, v := range memberArr {
 		if v != "" && v != removeMember {
 			newMemberList += v + ","
-			return
 		}
 	}
 	//更新成员列表
-	fmt.Println("之后的成员是:" + newMemberList)
+	//fmt.Println("之后的成员是:" + newMemberList)
 	stmtUp, err := db.Prepare("update groups set member=? where gid=?")
 	_, err = stmtUp.Exec(newMemberList, gid)
 	if err != nil {

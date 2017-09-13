@@ -3,12 +3,15 @@ package msgMgr
 import (
 	"fmt"
 
+	"ace"
 	"database/sql"
 	"encoding/json"
-	"time"
-
+	"game/data"
+	"game/logic/protocol"
 	"io"
 	"os"
+	"strings"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -62,7 +65,7 @@ func (this *GroupManager) GetOneGroupManager(gid string) *GroupModel {
 		if err != nil {
 			fmt.Println("初始化群聊天历史出错:", err)
 		}
-		fmt.Println("初始化一个群:", master, manager, member, len(historyMsgModels))
+		//fmt.Println("初始化一个群:", master, manager, member, len(historyMsgModels))
 		var groupModel = &GroupModel{gid, master, manager, member, historyMsgModels, false}
 		go groupModel.destory()
 		this.Groups[gid] = groupModel
@@ -94,6 +97,10 @@ func (this *GroupModel) destory() {
 func (this *GroupModel) OnGroupActive(msg *MessageModel) {
 	this.canDestory = false
 	this.History = append(this.History, *msg)
+}
+
+func (this *GroupModel) OnGroupActive2() {
+	this.canDestory = false
 }
 
 //持久化一个群的聊天记录
@@ -155,4 +162,46 @@ func checkFileExist(filename string) bool {
 		exist = false
 	}
 	return exist
+}
+
+//向一个群里所有在线人员广播一条消息
+func (this *GroupManager) Broadcast(gid string, msgModel *MessageModel) {
+
+	group := GroupMgr.GetOneGroupManager(gid)
+	group.OnGroupActive2()
+	//把消息分发给所有成员
+	response, _ := json.Marshal(*msgModel) //转发给所有人的消息
+	//得到所有成员
+	allMembers := group.Master + "," + group.Managers + "," + group.Members
+	allMembersArr := strings.Split(allMembers, ",")
+	//count := 0
+	for _, v := range allMembersArr {
+		if v != "" { //得到每一个人
+			//	fmt.Println("群成员", v)
+			memSe, ok := data.SyncAccount.AccountSession[v]
+			if ok { //如果这个人在线
+				//		count++
+				memSe.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, -1, response})
+			}
+		}
+	}
+	//fmt.Println("群发", count, "条消息")
+}
+
+//更改一个群的成员（增加和移除）
+func (this *GroupManager) ChangeMember(gid string, member string, op int) {
+	group := this.GetOneGroupManager(gid)
+	if op == 0 { //移除一个成员
+		newMember := ""
+		oldMembersArr := strings.Split(group.Members, ",")
+
+		for _, v := range oldMembersArr {
+			if v != "" && v != member { //得到每一个人
+				newMember += v + ","
+			}
+		}
+		group.Members = newMember
+	} else { //增加一个 成员
+		group.Members += "," + member
+	}
 }

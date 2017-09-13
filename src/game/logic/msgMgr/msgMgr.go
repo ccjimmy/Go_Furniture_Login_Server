@@ -37,6 +37,7 @@ const ( //协议类型
 	YOU_BE_AGREED_ENTER_GROUP = 37 //你被同意入群
 	QUIT_GROUP_CREQ           = 38 //退出一个群
 	QUIT_GROUP_SRES           = 39 //退出一个群的响应
+	REFRESH_GROUP_MEMBERS     = 40 //通知客户端刷新一个群的群成员
 	//聊天
 	CHAT_ME_TO_FRIEND_CREQ = 100 //和好友聊天
 	CHAT_ME_TO_FRIEND_SRES = 101 //和好友聊天的响应
