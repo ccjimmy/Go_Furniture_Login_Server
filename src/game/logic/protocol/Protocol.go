@@ -7,5 +7,6 @@ const (
 
 	HEART_PACKAGE_CREQ = 4 //心跳检查
 	//HEART_PACKAGE_SREQ = 5 //心跳检查
-	MESSAGE = 7 //消息相关
+	MESSAGE = 7 //
+	SETTING = 8
 )

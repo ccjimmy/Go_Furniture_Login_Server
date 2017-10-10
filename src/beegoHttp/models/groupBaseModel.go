@@ -1,13 +1,14 @@
 package models
 
 import (
-	//"fmt"
 	"fmt"
+	//"game/logic/msgMgr"
 
 	"github.com/astaxie/beego/orm"     //引入beego的orm
 	_ "github.com/go-sql-driver/mysql" //引入beego的mysql驱动
 )
 
+//群基本模型
 type GroupBaseInfoModel struct {
 	Gid         int
 	Name        string
@@ -36,6 +37,19 @@ func (this *GroupBaseInfoModel) ModifyGroupInfoModel(gid string, nickname string
 	o := orm.NewOrm()
 	sql := "update groups set name=?, description=? where gid=?"
 	_, err := o.Raw(sql, nickname, description, gid).Exec()
+	if err != nil {
+		fmt.Println(err)
+		return "false"
+	}
+	return "true"
+}
+
+//修改入群方式
+func (this *GroupBaseInfoModel) ModifyEnterMethod(gid string, method string) string {
+	fmt.Print("你好好", method)
+	o := orm.NewOrm()
+	sql := "update groups set verifymode=? where gid=?"
+	_, err := o.Raw(sql, method, gid).Exec()
 	if err != nil {
 		fmt.Println(err)
 		return "false"

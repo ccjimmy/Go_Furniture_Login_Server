@@ -54,7 +54,6 @@ func (c *BaseInfoController) MODIFY_BASE_INFO(username string, nickname string, 
 
 	result := SelfBaseInfoModel.ModifyPersonalInfoModel(username, nickname, desc)
 	c.Ctx.WriteString(result)
-	fmt.Println("你的信息是：", string(result))
 }
 
 //上传头像

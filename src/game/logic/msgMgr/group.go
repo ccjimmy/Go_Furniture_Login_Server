@@ -46,9 +46,41 @@ func (this *Group) Process(session *ace.Session, msgModel *MessageModel) {
 	case QUIT_GROUP_CREQ: //退出一个群
 		this.QUIT_GROUP_CREQ(session, msgModel)
 		break
+	case FORCE_REMOVE_GROUP_CREQ: //申请把一个人移除出群
+		this.FORCE_REMOVE_GROUP_CREQ(session, msgModel)
+		break
 	default:
 		fmt.Println("未知群消息类型")
 		break
+	}
+}
+
+//群管理者申请移除一位群成员
+func (this *Group) FORCE_REMOVE_GROUP_CREQ(session *ace.Session, msgModel *MessageModel) {
+	fmt.Println("要移除的群是", msgModel.From, "移除的人是", msgModel.To)
+	gid, err := strconv.Atoi(msgModel.From)
+	if err != nil {
+		fmt.Println("err--->FORCE_REMOVE_GROUP_CREQ:", err)
+	}
+	//1、群中移除这个人
+	removeMember(gid, msgModel.To)
+	//2、人中移除这个群
+	personalInfoRemoveGroup(msgModel.To, gid)
+	//3、群管理器中移除这个成员
+	GroupMgr.ChangeMember(msgModel.From, msgModel.To, 1)
+	//响应
+	msgModel.MsgType = FORCE_REMOVE_GROUP_SRES
+	response, _ := json.Marshal(*msgModel)
+	session.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, -1, response})
+	//给被删除人的响应
+	beRemoveSession, ok := data.SyncAccount.AccountSession[msgModel.To]
+	if !ok { //他不在线,写入离线消息
+		msgModel.MsgType = BE_REMOVE_GROUP_SRES
+		saveOffLineMessage(&msgModel.To, msgModel)
+	} else { //他在线
+		msgModel.MsgType = BE_REMOVE_GROUP_SRES
+		response, _ := json.Marshal(*msgModel)
+		beRemoveSession.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, -1, response})
 	}
 }
 
@@ -258,7 +290,7 @@ func (this *Group) QUIT_GROUP_CREQ(session *ace.Session, msgModel *MessageModel)
 	GroupMgr.ChangeMember(msgModel.To, msgModel.From, 0)
 }
 
-//个人信息中加入这个群
+//数据库个人信息中加入这个群
 func personalInfoAddGroup(user string, gid int, receiveMode int) {
 	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/furniture?charset=utf8")
 	defer db.Close()
@@ -303,7 +335,7 @@ func personalInfoAddGroup(user string, gid int, receiveMode int) {
 	}
 }
 
-//个人信息中移除这个群
+//数据库个人信息中移除这个群
 func personalInfoRemoveGroup(user string, gid int) {
 	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/furniture?charset=utf8")
 	defer db.Close()
@@ -340,7 +372,7 @@ func personalInfoRemoveGroup(user string, gid int) {
 	}
 }
 
-//群增加新成员
+//数据库中群增加新成员
 func addMember(gid int, newMember string) {
 	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/furniture?charset=utf8")
 	defer db.Close()
@@ -375,7 +407,7 @@ func addMember(gid int, newMember string) {
 	}
 }
 
-//移除成员
+//数据库中群移除一名成员
 func removeMember(gid int, removeMember string) {
 	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/furniture?charset=utf8")
 	defer db.Close()

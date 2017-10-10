@@ -1,19 +1,31 @@
 package controllers
 
 import (
+	"ace"
 	"beegoHttp/models"
 	"encoding/json"
 	"fmt"
+	"game/data"
+	"game/logic/msgMgr"
+	"game/logic/protocol"
+	"strings"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"     //引入beego的orm
 	_ "github.com/go-sql-driver/mysql" //引入beego的mysql驱动
 )
 
-//协议
+//http协议
 const (
-	GROUP_BASE_INFO        = "1" //获取一个群的基本信息
-	MODIFY_GROUP_BASE_INFO = "2" //修改一个群的基本信息
+	GROUP_BASE_INFO           = "1" //获取一个群的基本信息
+	MODIFY_GROUP_BASE_INFO    = "2" //修改一个群的基本信息
+	MODIFY_ENTER_GROUP_METHOD = "3" //修改一个群的加群方式
+)
+
+//套接字协议
+const (
+	MODIFY_GROUP_INFO_SREQ = 1
+	MODIFY_GROUP_FACE_SREQ = 2
 )
 
 //群基本信息与功能
@@ -31,6 +43,9 @@ func (c *GroupBaseInfoController) Get() {
 		break
 	case MODIFY_GROUP_BASE_INFO: //修改一个群的基本信息
 		c.MODIFY_GROUP_BASE_INFO(gid, c.GetString("name"), c.GetString("description"))
+		break
+	case MODIFY_ENTER_GROUP_METHOD: //修改一个群的加群方式
+		c.MODIFY_ENTER_GROUP_METHOD(gid, c.GetString("method"))
 		break
 	default:
 		fmt.Println("未知群http协议")
@@ -52,7 +67,48 @@ func (c *GroupBaseInfoController) GROUP_BASE_INFO(gid string) {
 func (c *GroupBaseInfoController) MODIFY_GROUP_BASE_INFO(gid string, name string, description string) {
 	var groupBaseInfoModel models.GroupBaseInfoModel
 	result := groupBaseInfoModel.ModifyGroupInfoModel(gid, name, description)
+	if result == "false" {
+		c.Ctx.WriteString(result)
+		return
+	}
 	c.Ctx.WriteString(result)
+	//广播给所有群员
+	group := msgMgr.GroupMgr.GetOneGroupManager(gid)
+	//得到所有成员
+	allMembers := group.Master + "," + group.Managers + "," + group.Members
+	allMembersArr := strings.Split(allMembers, ",")
+	for _, v := range allMembersArr {
+		if v != "" { //得到每一个人
+			memSe, ok := data.SyncAccount.AccountSession[v]
+			if ok { //如果这个人在线
+				memSe.Write(&ace.DefaultSocketModel{protocol.SETTING, -1, MODIFY_GROUP_INFO_SREQ, []byte(gid)})
+			}
+		}
+	}
+}
+
+//修改入群方式
+func (c *GroupBaseInfoController) MODIFY_ENTER_GROUP_METHOD(gid string, method string) {
+	var groupBaseInfoModel models.GroupBaseInfoModel
+	result := groupBaseInfoModel.ModifyEnterMethod(gid, method)
+	if result == "false" {
+		c.Ctx.WriteString(result)
+		return
+	}
+	c.Ctx.WriteString(result)
+	//广播给所有群员
+	group := msgMgr.GroupMgr.GetOneGroupManager(gid)
+	//得到所有成员
+	allMembers := group.Master + "," + group.Managers + "," + group.Members
+	allMembersArr := strings.Split(allMembers, ",")
+	for _, v := range allMembersArr {
+		if v != "" { //得到每一个人
+			memSe, ok := data.SyncAccount.AccountSession[v]
+			if ok { //如果这个人在线
+				memSe.Write(&ace.DefaultSocketModel{protocol.SETTING, -1, MODIFY_GROUP_INFO_SREQ, []byte(gid)})
+			}
+		}
+	}
 }
 
 //上传群头像
@@ -75,4 +131,17 @@ func (c *GroupBaseInfoController) Post() {
 		return
 	}
 	c.Ctx.WriteString("true")
+	//广播给所有群员
+	group := msgMgr.GroupMgr.GetOneGroupManager(gid)
+	//得到所有成员
+	allMembers := group.Master + "," + group.Managers + "," + group.Members
+	allMembersArr := strings.Split(allMembers, ",")
+	for _, v := range allMembersArr {
+		if v != "" { //得到每一个人
+			memSe, ok := data.SyncAccount.AccountSession[v]
+			if ok { //如果这个人在线
+				memSe.Write(&ace.DefaultSocketModel{protocol.SETTING, -1, MODIFY_GROUP_FACE_SREQ, []byte(gid)})
+			}
+		}
+	}
 }

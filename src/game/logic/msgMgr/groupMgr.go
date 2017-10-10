@@ -18,7 +18,7 @@ import (
 
 const groupHistoryToDBAmount = 200 //写入数据库的聊天记录的条数
 
-//消息数据结构
+//群管理器所使用的群结构
 type GroupModel struct {
 	gid        string
 	Master     string

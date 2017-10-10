@@ -38,6 +38,10 @@ const ( //协议类型
 	QUIT_GROUP_CREQ           = 38 //退出一个群
 	QUIT_GROUP_SRES           = 39 //退出一个群的响应
 	REFRESH_GROUP_MEMBERS     = 40 //通知客户端刷新一个群的群成员
+	FORCE_REMOVE_GROUP_CREQ   = 41 //把一个人移除出群
+	FORCE_REMOVE_GROUP_SRES   = 42 //把一个人移除出群的响应
+	BE_REMOVE_GROUP_SRES      = 43 //被移除出群
+
 	//聊天
 	CHAT_ME_TO_FRIEND_CREQ = 100 //和好友聊天
 	CHAT_ME_TO_FRIEND_SRES = 101 //和好友聊天的响应
