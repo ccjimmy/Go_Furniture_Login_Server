@@ -202,6 +202,17 @@ func (this *GroupManager) ChangeMember(gid string, member string, op int) {
 		}
 		group.Members = newMember
 	} else { //增加一个 成员
-		group.Members += "," + member
+		isAlReadyExist := false
+		oldMembersArr := strings.Split(group.Members, ",")
+		for _, v := range oldMembersArr {
+			if v == member { //已经存在
+				isAlReadyExist = true
+				break
+			}
+		}
+		if isAlReadyExist == false {
+			group.Members += "," + member
+		}
+
 	}
 }

@@ -49,9 +49,74 @@ func (this *Group) Process(session *ace.Session, msgModel *MessageModel) {
 	case FORCE_REMOVE_GROUP_CREQ: //申请把一个人移除出群
 		this.FORCE_REMOVE_GROUP_CREQ(session, msgModel)
 		break
+	case INVITE_TO_GROUP_CREQ: //申请邀请一个人入群
+		this.INVITE_TO_GROUP_CREQ(session, msgModel)
+		break
+	case INVITE_PROCESS_CREQ: //被邀请人的操作（他可以同意或拒绝）
+		this.INVITE_PROCESS_CREQ(session, msgModel)
+		break
 	default:
 		fmt.Println("未知群消息类型")
 		break
+	}
+}
+
+//被邀请人的操作（他可以同意或拒绝）
+func (this *Group) INVITE_PROCESS_CREQ(session *ace.Session, msgModel *MessageModel) {
+	//根据session获得这个人的账号
+	beInvite := data.SyncAccount.SessionAccount[session]
+
+	if msgModel.Content == "yes" { //同意了邀请
+		//入群逻辑
+		//群中加入这个人
+		intgid, _ := strconv.Atoi(msgModel.To)
+		addMember(intgid, beInvite)
+		//这个人中加入群
+		personalInfoAddGroup(beInvite, intgid, 0)
+		//内存中修改群成员
+		GroupMgr.ChangeMember(msgModel.To, beInvite, 1)
+	}
+	if msgModel.Content == "no" { //拒绝了邀请
+
+	}
+	//告诉邀请人 对方是否在线 先判断邀请人是否在线
+	yqrSession, ok := data.SyncAccount.AccountSession[msgModel.From]
+	if !ok { //邀请人不在线
+		msgModel.MsgType = OTHER_PROCESS_OF_INVITE_SRES
+		msgModel.From = data.SyncAccount.SessionAccount[session] //改变from 为被邀请人！
+		saveOffLineMessage(&msgModel.From, msgModel)
+	} else { //邀请人在线
+		msgModel.MsgType = OTHER_PROCESS_OF_INVITE_SRES
+		response, _ := json.Marshal(*msgModel)
+		yqrSession.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, -1, response})
+	}
+	//给被邀请人自己的响应
+	msgModel.MsgType = INVITE_PROCESS_SRES
+	response, _ := json.Marshal(*msgModel)
+	session.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, -1, response})
+}
+
+//申请邀请一个人入群
+func (this *Group) INVITE_TO_GROUP_CREQ(session *ace.Session, msgModel *MessageModel) {
+	fmt.Println("申请邀请一个人入群", msgModel.From, msgModel.To, msgModel.Content)
+	//给邀请人的响应
+	msgModel.MsgType = INVITE_TO_GROUP_SRES
+	response, _ := json.Marshal(*msgModel)
+	session.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, -1, response})
+	//给被邀请人的响应
+	msgModel.MsgType = BE_INVITE_TO_GROUP_SRES
+	memberArr := strings.Split(msgModel.Content, ",")
+	for _, v := range memberArr {
+		if v != "" {
+			fmt.Println("通知这个人被邀请了", v)
+			beInviteSession, ok := data.SyncAccount.AccountSession[v]
+			if !ok { //被邀请人不在线
+				saveOffLineMessage(&v, msgModel)
+			} else {
+				response, _ := json.Marshal(*msgModel)
+				beInviteSession.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, -1, response})
+			}
+		}
 	}
 }
 
