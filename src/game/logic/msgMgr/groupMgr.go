@@ -7,7 +7,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"game/data"
-	"game/logic/protocol"
+	//"game/logic/protocol"
 	"io"
 	"os"
 	"strings"
@@ -52,7 +52,7 @@ func (this *GroupManager) GetOneGroupManager(gid string) *GroupModel {
 		var history string
 		err = stmtOut.QueryRow(gid).Scan(&master, &manager, &member, &history)
 		if err != nil {
-			fmt.Println("获取一个群失败", err)
+			fmt.Println("获取一个群失败", gid, err)
 			return nil
 		}
 		if history == "" {
@@ -164,13 +164,13 @@ func checkFileExist(filename string) bool {
 	return exist
 }
 
-//向一个群里所有在线人员广播一条消息
-func (this *GroupManager) Broadcast(gid string, msgModel *MessageModel) {
+//向一个群里所有在线人员广播一条DefaultSocketModel类型消息，（离线的成员直接忽略！！！）
+func (this *GroupManager) Broadcast(gid string, message ace.DefaultSocketModel) {
 
 	group := GroupMgr.GetOneGroupManager(gid)
 	group.OnGroupActive2()
 	//把消息分发给所有成员
-	response, _ := json.Marshal(*msgModel) //转发给所有人的消息
+	//response, _ := json.Marshal(*msgModel) //转发给所有人的消息
 	//得到所有成员
 	allMembers := group.Master + "," + group.Managers + "," + group.Members
 	allMembersArr := strings.Split(allMembers, ",")
@@ -181,7 +181,7 @@ func (this *GroupManager) Broadcast(gid string, msgModel *MessageModel) {
 			memSe, ok := data.SyncAccount.AccountSession[v]
 			if ok { //如果这个人在线
 				//		count++
-				memSe.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, -1, response})
+				memSe.Write(&message)
 			}
 		}
 	}

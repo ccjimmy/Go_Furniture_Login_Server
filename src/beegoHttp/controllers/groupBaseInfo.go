@@ -15,19 +15,6 @@ import (
 	_ "github.com/go-sql-driver/mysql" //引入beego的mysql驱动
 )
 
-//http协议
-const (
-	GROUP_BASE_INFO           = "1" //获取一个群的基本信息
-	MODIFY_GROUP_BASE_INFO    = "2" //修改一个群的基本信息
-	MODIFY_ENTER_GROUP_METHOD = "3" //修改一个群的加群方式
-)
-
-//套接字协议
-const (
-	MODIFY_GROUP_INFO_SREQ = 1
-	MODIFY_GROUP_FACE_SREQ = 2
-)
-
 //群基本信息与功能
 type GroupBaseInfoController struct {
 	beego.Controller
@@ -38,13 +25,13 @@ func (c *GroupBaseInfoController) Get() {
 	gid := c.GetString("gid")
 
 	switch protocal {
-	case GROUP_BASE_INFO: //获取一个群的基本信息
+	case protocol.GROUP_BASE_INFO: //获取一个群的基本信息
 		c.GROUP_BASE_INFO(gid)
 		break
-	case MODIFY_GROUP_BASE_INFO: //修改一个群的基本信息
+	case protocol.MODIFY_GROUP_BASE_INFO: //修改一个群的基本信息
 		c.MODIFY_GROUP_BASE_INFO(gid, c.GetString("name"), c.GetString("description"))
 		break
-	case MODIFY_ENTER_GROUP_METHOD: //修改一个群的加群方式
+	case protocol.MODIFY_ENTER_GROUP_METHOD: //修改一个群的加群方式
 		c.MODIFY_ENTER_GROUP_METHOD(gid, c.GetString("method"))
 		break
 	default:
@@ -81,7 +68,7 @@ func (c *GroupBaseInfoController) MODIFY_GROUP_BASE_INFO(gid string, name string
 		if v != "" { //得到每一个人
 			memSe, ok := data.SyncAccount.AccountSession[v]
 			if ok { //如果这个人在线
-				memSe.Write(&ace.DefaultSocketModel{protocol.SETTING, -1, MODIFY_GROUP_INFO_SREQ, []byte(gid)})
+				memSe.Write(&ace.DefaultSocketModel{protocol.SETTING, -1, protocol.MODIFY_GROUP_INFO_SREQ, []byte(gid)})
 			}
 		}
 	}
@@ -105,7 +92,7 @@ func (c *GroupBaseInfoController) MODIFY_ENTER_GROUP_METHOD(gid string, method s
 		if v != "" { //得到每一个人
 			memSe, ok := data.SyncAccount.AccountSession[v]
 			if ok { //如果这个人在线
-				memSe.Write(&ace.DefaultSocketModel{protocol.SETTING, -1, MODIFY_GROUP_INFO_SREQ, []byte(gid)})
+				memSe.Write(&ace.DefaultSocketModel{protocol.SETTING, -1, protocol.MODIFY_GROUP_INFO_SREQ, []byte(gid)})
 			}
 		}
 	}
@@ -140,7 +127,7 @@ func (c *GroupBaseInfoController) Post() {
 		if v != "" { //得到每一个人
 			memSe, ok := data.SyncAccount.AccountSession[v]
 			if ok { //如果这个人在线
-				memSe.Write(&ace.DefaultSocketModel{protocol.SETTING, -1, MODIFY_GROUP_FACE_SREQ, []byte(gid)})
+				memSe.Write(&ace.DefaultSocketModel{protocol.SETTING, -1, protocol.MODIFY_GROUP_FACE_SREQ, []byte(gid)})
 			}
 		}
 	}

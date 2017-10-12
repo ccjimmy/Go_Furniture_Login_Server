@@ -77,7 +77,6 @@ func (this *Group) INVITE_PROCESS_CREQ(session *ace.Session, msgModel *MessageMo
 		GroupMgr.ChangeMember(msgModel.To, beInvite, 1)
 	}
 	if msgModel.Content == "no" { //拒绝了邀请
-
 	}
 	//告诉邀请人 对方是否在线 先判断邀请人是否在线
 	yqrSession, ok := data.SyncAccount.AccountSession[msgModel.From]
@@ -94,6 +93,8 @@ func (this *Group) INVITE_PROCESS_CREQ(session *ace.Session, msgModel *MessageMo
 	msgModel.MsgType = INVITE_PROCESS_SRES
 	response, _ := json.Marshal(*msgModel)
 	session.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, -1, response})
+	//广播群成员们刷新成员列表
+	GroupMgr.Broadcast(msgModel.To, ace.DefaultSocketModel{protocol.SETTING, -1, protocol.MODIFY_GROUP_INFO_SREQ, []byte(msgModel.To)})
 }
 
 //申请邀请一个人入群
@@ -133,7 +134,7 @@ func (this *Group) FORCE_REMOVE_GROUP_CREQ(session *ace.Session, msgModel *Messa
 	personalInfoRemoveGroup(msgModel.To, gid)
 	//3、群管理器中移除这个成员
 	GroupMgr.ChangeMember(msgModel.From, msgModel.To, 1)
-	//响应
+	//给操作者响应
 	msgModel.MsgType = FORCE_REMOVE_GROUP_SRES
 	response, _ := json.Marshal(*msgModel)
 	session.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, -1, response})
@@ -147,6 +148,8 @@ func (this *Group) FORCE_REMOVE_GROUP_CREQ(session *ace.Session, msgModel *Messa
 		response, _ := json.Marshal(*msgModel)
 		beRemoveSession.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, -1, response})
 	}
+	//广播群成员们刷新成员列表
+	GroupMgr.Broadcast(msgModel.From, ace.DefaultSocketModel{protocol.SETTING, -1, protocol.MODIFY_GROUP_INFO_SREQ, []byte(msgModel.From)})
 }
 
 //创建群
@@ -300,10 +303,9 @@ func (this *Group) ADD_GROUP_CREQ(session *ace.Session, msgModel *MessageModel) 
 		msgModel.Content = string(newContent)
 		response, _ := json.Marshal(*msgModel)
 		session.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, ADD_GROUP_SRES, response})
-		//通知群成员刷新群成员列表
-		refreshMember := &MessageModel{REFRESH_GROUP_MEMBERS, "", "", msgModel.To, ""}
-		fmt.Println("有新人加入，通知群员刷新成员列表")
-		GroupMgr.Broadcast(msgModel.To, refreshMember)
+		//广播群成员们刷新成员列表
+		GroupMgr.Broadcast(msgModel.To, ace.DefaultSocketModel{protocol.SETTING, -1, protocol.MODIFY_GROUP_INFO_SREQ, []byte(msgModel.To)})
+		//改变内存群成员
 		GroupMgr.ChangeMember(msgModel.To, msgModel.From, 1)
 	}
 }
@@ -332,10 +334,9 @@ func (this *Group) AGREE_ADD_GROUP_CREQ(session *ace.Session, msgModel *MessageM
 	msgModel.MsgType = AGREE_ADD_GROUP_SRES
 	response, _ := json.Marshal(*msgModel)
 	session.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, AGREE_ADD_GROUP_SRES, response})
-	//通知群成员刷新群成员列表
-	refreshMember := &MessageModel{REFRESH_GROUP_MEMBERS, "", "", msgModel.To, ""}
-	fmt.Println("有新人加入，通知群员刷新成员列表")
-	GroupMgr.Broadcast(msgModel.To, refreshMember)
+	//广播群成员们刷新成员列表
+	GroupMgr.Broadcast(msgModel.To, ace.DefaultSocketModel{protocol.SETTING, -1, protocol.MODIFY_GROUP_INFO_SREQ, []byte(msgModel.To)})
+	//改变内存群成员
 	GroupMgr.ChangeMember(msgModel.To, msgModel.From, 1)
 }
 
@@ -348,10 +349,9 @@ func (this *Group) QUIT_GROUP_CREQ(session *ace.Session, msgModel *MessageModel)
 	msgModel.MsgType = QUIT_GROUP_SRES
 	response, _ := json.Marshal(*msgModel)
 	session.Write(&ace.DefaultSocketModel{protocol.MESSAGE, -1, QUIT_GROUP_SRES, response})
-	//通知群成员刷新群成员列表
-	refreshMember := &MessageModel{REFRESH_GROUP_MEMBERS, "", "", msgModel.To, ""}
-	fmt.Println("有人退出，通知群员刷新成员列表")
-	GroupMgr.Broadcast(msgModel.To, refreshMember)
+	//广播群成员们刷新成员列表
+	GroupMgr.Broadcast(msgModel.To, ace.DefaultSocketModel{protocol.SETTING, -1, protocol.MODIFY_GROUP_INFO_SREQ, []byte(msgModel.To)})
+	//改变内存群成员
 	GroupMgr.ChangeMember(msgModel.To, msgModel.From, 0)
 }
 
