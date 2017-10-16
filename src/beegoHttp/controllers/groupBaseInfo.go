@@ -35,7 +35,7 @@ func (c *GroupBaseInfoController) Get() {
 		c.MODIFY_ENTER_GROUP_METHOD(gid, c.GetString("method"))
 		break
 	default:
-		fmt.Println("未知群http协议")
+		fmt.Println("未知群http协议:", protocal)
 		break
 	}
 

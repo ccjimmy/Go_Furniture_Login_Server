@@ -176,9 +176,9 @@ func (this *Handler) reg(un *string, psw *string, phone *string) bool {
 	_, err = stmt.Exec(*un, *psw, "default.jpg", "叮叮小鸟", "我还没有个性签名", *phone, 0, 0, "不是厂家", time.Now().Format("2006-01-02 15:04:05"), time.Now().Format("2006-01-02 15:04:05"))
 	tools.CheckErr(err)
 	//添加数据
-	stmtIns, err := db.Prepare("INSERT userdata SET username=?,offlinemsg=?,friends=?,commodity=?,rooms=?,likes=?")
+	stmtIns, err := db.Prepare("INSERT userdata SET username=?,offlinemsg=?,friends=?,groups=?,commodity=?,rooms=?,likes=?")
 	tools.CheckErr(err)
-	_, err = stmtIns.Exec(*un, "[]", "111111", "[]", "[]", "[]")
+	_, err = stmtIns.Exec(*un, "[]", "111111", "[]", "[]", "[]", "[]")
 	tools.CheckErr(err)
 	return true
 }

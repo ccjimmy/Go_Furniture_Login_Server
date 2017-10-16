@@ -21,10 +21,10 @@ const (
 )
 
 func (c *BaseInfoController) Get() {
-	protocal := c.GetString("protocol")
+	protocol := c.GetString("protocol")
 	username := c.GetString("username")
 
-	switch protocal {
+	switch protocol {
 	case BASE_INFO: //获取一个人基本信息
 		c.BASE_INFO(username)
 		break
@@ -34,7 +34,7 @@ func (c *BaseInfoController) Get() {
 		c.MODIFY_BASE_INFO(username, nickname, desc)
 		break
 	default:
-		fmt.Println("未知个人http协议")
+		fmt.Println("未知个人http协议:", protocol)
 		break
 	}
 }
