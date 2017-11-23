@@ -36,7 +36,7 @@ func (this *Sync) SessionClose(session *ace.Session) {
 		return
 	}
 	//更新用户表的最后登录时间
-	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/furniture?charset=utf8")
+	db, err := sql.Open("mysql", tools.GetSQLStr())
 	defer db.Close()
 	tools.CheckErr(err)
 	//更新是否在线的状态

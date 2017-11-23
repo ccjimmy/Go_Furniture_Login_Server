@@ -8,9 +8,9 @@ import (
 	"game/data"
 	"game/logic/protocol"
 	"strconv"
-	//	"tools"
 	"strings"
 	"time"
+	"tools"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -154,7 +154,7 @@ func (this *Group) FORCE_REMOVE_GROUP_CREQ(session *ace.Session, msgModel *Messa
 
 //创建群
 func (this *Group) CREATE_GROUP_CREQ(session *ace.Session, msgModel *MessageModel) {
-	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/furniture?charset=utf8")
+	db, err := sql.Open("mysql", tools.GetSQLStr())
 	defer db.Close()
 	if err != nil {
 		fmt.Println(err)
@@ -205,7 +205,7 @@ func (this *Group) CREATE_GROUP_CREQ(session *ace.Session, msgModel *MessageMode
 
 //加群
 func (this *Group) ADD_GROUP_CREQ(session *ace.Session, msgModel *MessageModel) {
-	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/furniture?charset=utf8")
+	db, err := sql.Open("mysql", tools.GetSQLStr())
 	defer db.Close()
 	if err != nil {
 		fmt.Println(err)
@@ -357,7 +357,7 @@ func (this *Group) QUIT_GROUP_CREQ(session *ace.Session, msgModel *MessageModel)
 
 //数据库个人信息中加入这个群
 func personalInfoAddGroup(user string, gid int, receiveMode int) {
-	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/furniture?charset=utf8")
+	db, err := sql.Open("mysql", tools.GetSQLStr())
 	defer db.Close()
 	if err != nil {
 		fmt.Println(err)
@@ -402,7 +402,7 @@ func personalInfoAddGroup(user string, gid int, receiveMode int) {
 
 //数据库个人信息中移除这个群
 func personalInfoRemoveGroup(user string, gid int) {
-	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/furniture?charset=utf8")
+	db, err := sql.Open("mysql", tools.GetSQLStr())
 	defer db.Close()
 	if err != nil {
 		fmt.Println(err)
@@ -439,7 +439,7 @@ func personalInfoRemoveGroup(user string, gid int) {
 
 //数据库中群增加新成员
 func addMember(gid int, newMember string) {
-	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/furniture?charset=utf8")
+	db, err := sql.Open("mysql", tools.GetSQLStr())
 	defer db.Close()
 	if err != nil {
 		fmt.Println(err)
@@ -474,7 +474,7 @@ func addMember(gid int, newMember string) {
 
 //数据库中群移除一名成员
 func removeMember(gid int, removeMember string) {
-	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/furniture?charset=utf8")
+	db, err := sql.Open("mysql", tools.GetSQLStr())
 	defer db.Close()
 	if err != nil {
 		fmt.Println(err)

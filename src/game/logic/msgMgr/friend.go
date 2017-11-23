@@ -37,7 +37,7 @@ func (this *Friend) Process(session *ace.Session, msgModel *MessageModel) {
 
 //申请添加好友
 func (this *Friend) ADD_FRIEND_CREQ(session *ace.Session, message *MessageModel) {
-	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/furniture?charset=utf8")
+	db, err := sql.Open("mysql", tools.GetSQLStr())
 	defer db.Close()
 	if err != nil {
 		fmt.Println(err)
@@ -166,7 +166,7 @@ func (this *Friend) DELETE_FRIEND_CREQ(session *ace.Session, message *MessageMod
 }
 
 func updateFriendList(self string, other string, op int) { //op=0是增加好友 op=1是删除好友
-	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/furniture?charset=utf8")
+	db, err := sql.Open("mysql", tools.GetSQLStr())
 	defer db.Close()
 	tools.CheckErr(err)
 	stmtOut, err := db.Prepare("SELECT friends FROM userdata WHERE username = ?")

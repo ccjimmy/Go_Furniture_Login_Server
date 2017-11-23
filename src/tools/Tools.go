@@ -9,6 +9,10 @@ import (
 	"os"
 )
 
+const (
+	SQLSTR = "root:furlogin123654@tcp(localhost:3306)/furniture?charset=utf8"
+)
+
 type Sync struct {
 	Id int
 }
@@ -17,7 +21,9 @@ var MyTool = &Sync{Id: 11}
 
 func init() {
 }
-
+func GetSQLStr() string {
+	return SQLSTR
+}
 func ReadAll() {
 	//1、也许大部分基本的文件读取任务是将文件内容读取到内存中。
 	dat, err := ioutil.ReadFile("a.txt")

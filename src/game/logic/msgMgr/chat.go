@@ -13,6 +13,7 @@ import (
 	//	//	"tools"
 	"strings"
 	//	"time"
+	"tools"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -39,7 +40,7 @@ func (this *Chat) Process(session *ace.Session, msgModel *MessageModel) {
 
 //我向朋友聊天
 func (this *Chat) CHAT_ME_TO_FRIEND(session *ace.Session, msgModel *MessageModel) {
-	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/furniture?charset=utf8")
+	db, err := sql.Open("mysql", tools.GetSQLStr())
 	defer db.Close()
 	if err != nil {
 		fmt.Println(err)

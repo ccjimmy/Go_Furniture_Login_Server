@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"tools"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -96,7 +97,7 @@ func (this *MsgMgr) Process(session *ace.Session, message ace.DefaultSocketModel
 
 //不在线时保存离线消息
 func saveOffLineMessage(userName *string, msgModel *MessageModel) { //to不在线，存给to
-	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/furniture?charset=utf8")
+	db, err := sql.Open("mysql", tools.GetSQLStr())
 	defer db.Close()
 	if err != nil {
 		fmt.Println(err)

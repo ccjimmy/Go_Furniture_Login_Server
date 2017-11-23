@@ -12,6 +12,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"tools"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -39,7 +40,7 @@ func (this *GroupManager) GetOneGroupManager(gid string) *GroupModel {
 	if ok {
 		return group
 	} else {
-		db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/furniture?charset=utf8")
+		db, err := sql.Open("mysql", tools.GetSQLStr())
 		defer db.Close()
 		if err != nil {
 			fmt.Println(err)
@@ -113,7 +114,7 @@ func (this *GroupModel) saveHistory() {
 		toDB = this.History[len(this.History)-groupHistoryToDBAmount:]
 	}
 
-	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/furniture?charset=utf8")
+	db, err := sql.Open("mysql", tools.GetSQLStr())
 	defer db.Close()
 	if err != nil {
 		fmt.Println(err)

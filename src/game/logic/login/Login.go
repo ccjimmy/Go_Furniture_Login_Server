@@ -158,7 +158,7 @@ func (this *Handler) reg(un *string, psw *string, phone *string) bool {
 		return false
 	}()
 
-	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/furniture?charset=utf8")
+	db, err := sql.Open("mysql", tools.GetSQLStr())
 	defer db.Close()
 	tools.CheckErr(err)
 	//先对比数据库 看是否已被注册
@@ -195,7 +195,7 @@ func (this *Handler) login(session *ace.Session, un *string, psw *string) string
 		}
 		return false
 	}()
-	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/furniture?charset=utf8")
+	db, err := sql.Open("mysql", tools.GetSQLStr())
 	defer db.Close()
 	tools.CheckErr(err)
 	//验证账号与密码
