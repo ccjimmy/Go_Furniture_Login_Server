@@ -11,7 +11,7 @@ import (
 
 const (
 	MaxSocketSize = 4000
-	port          = 10101
+	port          = 10103
 )
 
 /**
