@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	SQLSTR = "root:furlogin123654@tcp(localhost:3306)/furniture?charset=utf8"
+	//SQLSTR = "root:furlogin123654@tcp(localhost:3306)/furniture?charset=utf8"//V1.0
+	SQLSTR = "server2.0:furlogin123654@/furniture2.0?charset=utf8"
 )
 
 type Sync struct {
